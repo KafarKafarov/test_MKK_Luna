@@ -56,7 +56,7 @@ class Activity(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    parent_id: Mapped[Mapped[int | None]] = mapped_column(
+    parent_id: Mapped[int | None] = mapped_column(
         ForeignKey("activities.id"),
         nullable=True,
     )

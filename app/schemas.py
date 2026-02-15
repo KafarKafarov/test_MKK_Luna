@@ -23,3 +23,7 @@ class OrganizationOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class GeoSearchOut(BaseModel):
+    organizations: list[OrganizationOut]
+    buildings: list[BuildingOut]
