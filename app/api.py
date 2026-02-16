@@ -21,7 +21,12 @@ router.dependencies.append(Depends(require_api_key))
 def get_service() -> OrgsService:
     return OrgsService(orgs=OrgsRepository(), buildings=BuildingsRepository())
 
-@router.get("/organizations/search", response_model=list[OrganizationOut])
+@router.get(
+    "/organizations/search",
+    response_model=list[OrganizationOut],
+    tags=["Organizations"],
+    summary="Search organizations",
+)
 def search_organizations(
     q: str = Query(min_length=1),
     db: Session = Depends(get_db),
@@ -30,7 +35,12 @@ def search_organizations(
     return svc.search_by_name(db, q)
 
 
-@router.get("/organizations/{org_id}", response_model=OrganizationOut)
+@router.get(
+    "/organizations/{org_id}",
+    response_model=OrganizationOut,
+    tags=["Organizations"],
+    summary="Get organization by id",
+)
 def get_organization(
         org_id: int,
         db: Session = Depends(get_db),
@@ -39,7 +49,12 @@ def get_organization(
     return svc.get_organization(db, org_id)
 
 
-@router.get("/buildings/{building_id}/organizations", response_model=list[OrganizationOut])
+@router.get(
+    "/buildings/{building_id}/organizations",
+    response_model=list[OrganizationOut],
+    tags=["Buildings"],
+    summary="List organizations in building",
+)
 def organizations_in_building(
     building_id: int,
     db: Session = Depends(get_db),
@@ -48,7 +63,12 @@ def organizations_in_building(
     return svc.organizations_in_building(db, building_id)
 
 
-@router.get("/activities/{activity_id}/organizations", response_model=list[OrganizationOut])
+@router.get(
+    "/activities/{activity_id}/organizations",
+    response_model=list[OrganizationOut],
+    tags=["Activities"],
+    summary="List organizations by activity (depth ≤ 3)",
+)
 def organizations_by_activity(
     activity_id: int,
     db: Session = Depends(get_db),
@@ -57,7 +77,12 @@ def organizations_by_activity(
     return svc.organizations_by_activity(db, activity_id)
 
 
-@router.get("/geo/radius", response_model=GeoSearchOut)
+@router.get(
+    "/geo/radius",
+    response_model=GeoSearchOut,
+    tags=["Geo"],
+    summary="Geo search by radius",
+)
 def geo_radius(
     lat: float,
     lon: float,
@@ -68,7 +93,10 @@ def geo_radius(
     return svc.geo_radius(db, lat, lon, r_m)
 
 
-@router.get("/geo/rectangle", response_model=GeoSearchOut)
+@router.get(
+    "/geo/rectangle",
+    response_model=GeoSearchOut,
+)
 def geo_rectangle(
     lat1: float,
     lon1: float,

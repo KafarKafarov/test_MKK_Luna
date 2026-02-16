@@ -1,4 +1,3 @@
-
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, selectinload
 
@@ -31,7 +30,7 @@ class OrgsRepository:
                 selectinload(Organization.activities),
             )
         )
-        return db.execute(stmt).scalars().all()
+        return list(db.execute(stmt).scalars().all())
 
     @staticmethod
     def orgs_in_building(db: Session, building_id: int) -> list[Organization]:
@@ -44,7 +43,7 @@ class OrgsRepository:
                 selectinload(Organization.activities),
             )
         )
-        return db.execute(stmt).scalars().all()
+        return list(db.execute(stmt).scalars().all())
 
     @staticmethod
     def activity_exists(db: Session, activity_id: int) -> bool:
@@ -53,7 +52,6 @@ class OrgsRepository:
 
     @staticmethod
     def activity_descendants_ids(db: Session, root_activity_id: int) -> list[int]:
-        # depth <= 3 (включая корень)
         sql = text(
             """
             WITH RECURSIVE tree AS (
@@ -87,7 +85,7 @@ class OrgsRepository:
             )
             .distinct()
         )
-        return db.execute(stmt).scalars().all()
+        return list(db.execute(stmt).scalars().all())
 
 
 class BuildingsRepository:
@@ -97,4 +95,4 @@ class BuildingsRepository:
             Building.lat.between(bbox.lat_min, bbox.lat_max),
             Building.lon.between(bbox.lon_min, bbox.lon_max),
         )
-        return db.execute(stmt).scalars().all()
+        return list(db.execute(stmt).scalars().all())

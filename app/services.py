@@ -2,11 +2,12 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.geo import bbox_for_radius, bbox_for_rectangle, haversine_m
+from app.models import Organization
 from app.repositories import BuildingsRepository, OrgsRepository
 from app.schemas import BuildingOut, GeoSearchOut, OrganizationOut
 
 
-def org_to_out(o) -> OrganizationOut:  return OrganizationOut.model_validate(
+def org_to_out(o: Organization) -> OrganizationOut:  return OrganizationOut.model_validate(
         {
             "id": o.id,
             "name": o.name,
@@ -18,7 +19,11 @@ def org_to_out(o) -> OrganizationOut:  return OrganizationOut.model_validate(
 
 
 class OrgsService:
-    def __init__(self, orgs: OrgsRepository, buildings: BuildingsRepository) -> None:
+    def __init__(
+            self,
+            orgs: OrgsRepository,
+            buildings: BuildingsRepository,
+    ) -> None:
         self.orgs = orgs
         self.buildings = buildings
 
