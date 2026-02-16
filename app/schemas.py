@@ -9,9 +9,6 @@ class BuildingOut(BaseModel):
     lat: float
     lon: float
 
-    class Config:
-        from_attributes = True
-
 
 class OrganizationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -21,8 +18,6 @@ class OrganizationOut(BaseModel):
     building: BuildingOut
     phones: list[str]
 
-    class Config:
-        from_attributes = True
 
 class GeoSearchOut(BaseModel):
     organizations: list[OrganizationOut]

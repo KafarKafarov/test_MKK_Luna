@@ -41,9 +41,7 @@ class Organization(Base):
 
 class OrganizationPhone(Base):
     __tablename__ = "organization_phones"
-    __table_args__ = (
-        UniqueConstraint("organization_id", "phone", name="uq_org_phone"),
-    )
+    __table_args__ = (UniqueConstraint("organization_id", "phone", name="uq_org_phone"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=False)
@@ -73,9 +71,7 @@ class Activity(Base):
 
 class OrganizationActivity(Base):
     __tablename__ = "organization_activities"
-    __table_args__ = (
-        UniqueConstraint("organization_id", "activity_id", name="uq_org_activity"),
-    )
+    __table_args__ = (UniqueConstraint("organization_id", "activity_id", name="uq_org_activity"),)
 
     organization_id: Mapped[int] = mapped_column(
         ForeignKey("organizations.id"),
