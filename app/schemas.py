@@ -17,6 +17,7 @@ class OrganizationOut(BaseModel):
     name: str
     building: BuildingOut
     phones: list[str]
+    activities: list[str]
 
 
 class GeoSearchOut(BaseModel):
