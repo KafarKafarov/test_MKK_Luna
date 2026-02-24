@@ -1,3 +1,4 @@
+"""ORM-модели"""
 from __future__ import annotations
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint
@@ -5,10 +6,21 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
+    """Базовый класс декларативных ORM-моделей"""
     pass
 
 
 class Building(Base):
+    """
+       Здание(точка на карте + адрес)
+
+       Attributes:
+           id: PK
+           address: адрес
+           lat: Широта
+           lon: Долгота
+           organizations: Организации, находящиеся в здании
+    """
     __tablename__ = "buildings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -23,6 +35,17 @@ class Building(Base):
 
 
 class Organization(Base):
+    """
+        Организация(привязана к зданию)
+
+        Attributes:
+            id: PK
+            name: Название организации
+            building_id: FK на buildings.id
+            building: ORM-ссылка на здание
+            phones: Телефоны
+            activities: Виды деятельности
+    """
     __tablename__ = "organizations"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -40,6 +63,15 @@ class Organization(Base):
 
 
 class OrganizationPhone(Base):
+    """
+        Телефон организации
+
+        Attributes:
+            id: PK
+            organization_id: FK на organizations.id
+            phone: Телефонный номер
+            organization: ORM-ссылка на организацию
+    """
     __tablename__ = "organization_phones"
     __table_args__ = (UniqueConstraint("organization_id", "phone", name="uq_org_phone"),)
 
@@ -50,6 +82,17 @@ class OrganizationPhone(Base):
 
 
 class Activity(Base):
+    """
+        Вид деятельности
+
+        Attributes:
+            id: PK
+            name: Название вида деятельности
+            parent_id: FK на activities.id | None
+            parent: ORM-ссылка на родителя
+            children: Дочерние активности
+            organizations: Организации, у которых есть этот вид деятельности
+    """
     __tablename__ = "activities"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -70,6 +113,7 @@ class Activity(Base):
 
 
 class OrganizationActivity(Base):
+    """Связующая таблица для связи M:N"""
     __tablename__ = "organization_activities"
     __table_args__ = (UniqueConstraint("organization_id", "activity_id", name="uq_org_activity"),)
 

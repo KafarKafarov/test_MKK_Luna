@@ -1,9 +1,11 @@
+"""Smoke-тест для проверки доступности сервиса"""
 from fastapi.testclient import TestClient
 
 from app.main import app
 
 
 def test_health() -> None:
+    """Health-check эндпоинта"""
     client = TestClient(app)
     resp = client.get("/health")
     assert resp.status_code == 200
