@@ -1,5 +1,6 @@
 """Конфигурация pytest для интеграционных тестов API"""
 from collections.abc import Generator
+from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,6 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.db import get_db
 from app.main import app
+from app.models import Base
 
 
 @pytest.fixture(scope="session")
@@ -26,8 +28,12 @@ def engine() -> Generator[Engine, None, None]:
         "postgresql+psycopg://orgs:1234@localhost:5432/orgs",
         pool_pre_ping=True,
     )
+
+    Base.metadata.create_all(bind=eng)
+
     yield eng
 
+    Base.metadata.drop_all(bind=eng)
 
 @pytest.fixture(scope="function")
 def db_session(engine: Engine) -> Generator[Session, None, None]:
@@ -76,9 +82,14 @@ def override_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
         class _TestSettings:
             database_url = "postgresql+psycopg://orgs:1234@localhost:5432/orgs"
             api_key = "supersecret"
-        monkeypatch.setattr(config, "get_settings", lambda: _TestSettings())
+        monkeypatch.setattr(target=config, value=lambda: _TestSettings(), name="get_settings")
     else:
-        monkeypatch.setattr(config.settings, "api_key", "supersecret", raising=False)
+        monkeypatch.setattr(
+            target=config.settings,
+            name="api_key",
+            value="supersecret",
+            raising=False,
+        )
 
 
 @pytest.fixture()
@@ -94,6 +105,10 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as c:
+    with TestClient(app=app) as c:
         yield c
     app.dependency_overrides.clear()
+
+@pytest.fixture()
+def mock_db() -> Session:
+    return Mock(spec=Session)

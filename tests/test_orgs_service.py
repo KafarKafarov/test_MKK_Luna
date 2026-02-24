@@ -3,14 +3,18 @@ from unittest.mock import Mock
 
 import pytest
 from fastapi import HTTPException
+from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.services import OrgsService
 
-def test_get_organization() -> None:
+
+def test_get_organization(mock_db: Session) -> None:
     """
         OrgsService.get_organization обязан выбрасывать HTTPException(404),
         если репозиторий не нашёл организацию
+
+        Args: mock_db
 
         Mock: orgs_repo.get_org_by_id
     """
@@ -19,15 +23,17 @@ def test_get_organization() -> None:
 
     svc = OrgsService(orgs=fake_repo, buildings=Mock())
 
-    with pytest.raises(HTTPException) as exc:
-        svc.get_organization(Mock(spec=Session), 1)
+    with pytest.raises(expected_exception=HTTPException) as exc:
+        svc.get_organization(db=mock_db, org_id=1)
 
     assert exc.value.status_code == 404
 
-def test_activity_not_found() -> None:
+def test_activity_not_found(mock_db: Session) -> None:
     """
         OrgsService.organizations_by_activity должен выбрасывать HTTPException,
         если activity не существует
+
+        Args: mock_db
 
         Mock: orgs_repo.activity_exists
     """
@@ -36,8 +42,8 @@ def test_activity_not_found() -> None:
 
     svc = OrgsService(orgs=fake_repo, buildings=Mock())
 
-    with pytest.raises(HTTPException):
-        svc.organizations_by_activity(Mock(spec=Session), 1)
+    with pytest.raises(expected_exception=HTTPException):
+        svc.organizations_by_activity(db=mock_db, activity_id=1)
 
 def test_search_validation(client: TestClient) -> None:
     """
