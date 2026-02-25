@@ -1,4 +1,4 @@
-.PHONY: install lint test run fmt
+.PHONY: install lint test up down
 
 install:
 	poetry install
