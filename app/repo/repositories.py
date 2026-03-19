@@ -1,15 +1,19 @@
 """Слой доступа к данным"""
 from sqlalchemy import select, text
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.geo import BBox
-from app.models import Activity, Building, Organization
+from app.api.v1.geo import BBox
+from app.models.models import Activity, Building, Organization
 
 
 class OrgsRepository:
     """Репозиторий для работы с организациями и деятельностями"""
     @staticmethod
-    def get_org_by_id(db: Session, org_id: int) -> Organization | None:
+    async def get_org_by_id(
+            db: AsyncSession,
+            org_id: int,
+    ) -> Organization | None:
         """
             Возвращает организацию по id
 
@@ -29,10 +33,14 @@ class OrgsRepository:
                 selectinload(Organization.activities),
             )
         )
-        return db.execute(stmt).scalar_one_or_none()
+        result = await db.execute(stmt)
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def search_orgs_by_name(db: Session, q: str) -> list[Organization]:
+    async def search_orgs_by_name(
+            db: AsyncSession,
+            q: str,
+    ) -> list[Organization]:
         """
             Поиск организаций по части названия
 
@@ -52,10 +60,14 @@ class OrgsRepository:
                 selectinload(Organization.activities),
             )
         )
-        return list(db.execute(stmt).scalars().all())
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
 
     @staticmethod
-    def orgs_in_building(db: Session, building_id: int) -> list[Organization]:
+    async def orgs_in_building(
+            db: AsyncSession,
+            building_id: int,
+    ) -> list[Organization]:
         """
             Возвращает все организации в указанном здании
 
@@ -75,10 +87,34 @@ class OrgsRepository:
                 selectinload(Organization.activities),
             )
         )
-        return list(db.execute(stmt).scalars().all())
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
 
     @staticmethod
-    def activity_exists(db: Session, activity_id: int) -> bool:
+    async def orgs_by_building_ids(
+            db: AsyncSession,
+            building_ids: list[int],
+    ) -> list[Organization]:
+        if not building_ids:
+            return []
+
+        stmt = (
+            select(Organization)
+            .where(Organization.building_id.in_(building_ids))
+            .options(
+                selectinload(Organization.building),
+                selectinload(Organization.phones),
+                selectinload(Organization.activities),
+            )
+        )
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def activity_exists(
+            db: AsyncSession,
+            activity_id: int,
+    ) -> bool:
         """
             Проверяет существование вида деятельности
 
@@ -90,10 +126,14 @@ class OrgsRepository:
                 bool: True если существует
            """
         stmt = select(Activity.id).where(Activity.id == activity_id)
-        return db.execute(stmt).scalar_one_or_none() is not None
+        result = await db.execute(stmt)
+        return result.scalar_one_or_none() is not None
 
     @staticmethod
-    def activity_descendants_ids(db: Session, root_activity_id: int) -> list[int]:
+    async def activity_descendants_ids(
+            db: AsyncSession,
+            root_activity_id: int,
+    ) -> list[int]:
         """
             Возвращает список ID активности и её дочерних до глубины 3
 
@@ -119,11 +159,18 @@ class OrgsRepository:
             SELECT id FROM tree;
             """
         )
-        rows = db.execute(sql, {"root_id": root_activity_id}).all()
+        result = await db.execute(
+            statement=sql,
+            params={"root_id": root_activity_id},
+        )
+        rows = result.all()
         return [int(r[0]) for r in rows]
 
     @staticmethod
-    def orgs_by_activity_ids(db: Session, activity_ids: list[int]) -> list[Organization]:
+    async def orgs_by_activity_ids(
+            db: AsyncSession,
+            activity_ids: list[int],
+    ) -> list[Organization]:
         """
             Возвращает организации, связанные с заданными ID активностей
 
@@ -147,13 +194,17 @@ class OrgsRepository:
             )
             .distinct()
         )
-        return list(db.execute(stmt).scalars().all())
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
 
 
 class BuildingsRepository:
     """Репозиторий для работы со зданиями"""
     @staticmethod
-    def buildings_in_bbox(db: Session, bbox: BBox) -> list[Building]:
+    async def buildings_in_bbox(
+            db: AsyncSession,
+            bbox: BBox,
+    ) -> list[Building]:
         """
             Возвращает здания внутри заданного прямоугольника
 
@@ -168,4 +219,5 @@ class BuildingsRepository:
             Building.lat.between(bbox.lat_min, bbox.lat_max),
             Building.lon.between(bbox.lon_min, bbox.lon_max),
         )
-        return list(db.execute(stmt).scalars().all())
+        result = await db.execute(stmt)
+        return list(result.scalars().all())

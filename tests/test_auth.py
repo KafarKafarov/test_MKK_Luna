@@ -1,16 +1,21 @@
 """Тесты авторизации API"""
-from fastapi.testclient import TestClient
+import pytest
+from httpx import AsyncClient
 
 
-def test_unauthorized(client: TestClient) -> None:
+@pytest.mark.asyncio
+async def test_unauthorized(client: AsyncClient) -> None:
     """Проверяет, что запрос без заголовка X-API-Key запрещён"""
-    resp = client.get(url="/organizations/search", params={"q": "a"})
+    resp = await client.get(
+        url="/organizations/search",
+        params={"q": "a"},
+    )
     assert resp.status_code == 401
 
-
-def test_wrong_key(client: TestClient) -> None:
+@pytest.mark.asyncio
+async def test_wrong_key(client: AsyncClient) -> None:
     """Проверяет, что неверный API key приводит к 401 ошибки"""
-    resp = client.get(
+    resp = await client.get(
         url="/organizations/search",
         params={"q": "a"},
         headers={"X-API-Key": "wrong"},

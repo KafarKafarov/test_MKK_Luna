@@ -18,13 +18,17 @@ def haversine_m(
         lon2: float,
 ) -> float:
     """
-       Прямоугольная область в координатах широты и долготы
+        Вычисляет расстояние между двумя точками на поверхности Земли
+        по формуле гаверсинуса
 
-       Attributes:
-           lat_min: Минимальная широта
-           lat_max: Максимальная широта
-           lon_min: Минимальная долгота
-           lon_max: Максимальная долгота
+        Args:
+            lat1: Широта первой точки
+            lon1: Долгота первой точки
+            lat2: Широта второй точки
+            lon2: Долгота второй точки
+
+        Returns:
+            float: Расстояние в метрах
     """
     r = 6_371_000.0
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
@@ -38,7 +42,11 @@ def haversine_m(
     return 2 * r * math.asin(math.sqrt(a))
 
 
-def bbox_for_radius(lat: float, lon: float, radius_m: float) -> BBox:
+def bbox_for_radius(
+        lat: float,
+        lon: float,
+        radius_m: float,
+) -> BBox:
     """
         Строит область вокруг точки для радиусного поиска
 
@@ -51,7 +59,9 @@ def bbox_for_radius(lat: float, lon: float, radius_m: float) -> BBox:
             BBox: Прямоугольная область, содержащая круг радиуса radius_m
     """
     lat_delta = radius_m / 111_000.0
-    lon_delta = radius_m / (111_000.0 * max(0.1, math.cos(math.radians(lat))))
+    lon_delta = radius_m / (111_000.0 * max(
+        0.1, math.cos(math.radians(lat)),
+    ))
     return BBox(
         lat_min=lat - lat_delta,
         lat_max=lat + lat_delta,

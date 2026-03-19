@@ -2,7 +2,12 @@
 from __future__ import annotations
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 
 class Base(DeclarativeBase):
@@ -24,7 +29,10 @@ class Building(Base):
     __tablename__ = "buildings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    address: Mapped[str] = mapped_column(String(255), nullable=False)
+    address: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
     lat: Mapped[float] = mapped_column(nullable=False)
     lon: Mapped[float] = mapped_column(nullable=False)
 
@@ -49,9 +57,17 @@ class Organization(Base):
     __tablename__ = "organizations"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
-    building_id: Mapped[int] = mapped_column(ForeignKey("buildings.id"), nullable=False)
-    building: Mapped[Building] = relationship(back_populates="organizations")
+    name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+    building_id: Mapped[int] = mapped_column(
+        ForeignKey("buildings.id"),
+        nullable=False,
+    )
+    building: Mapped[Building] = relationship(
+        back_populates="organizations",
+    )
     phones: Mapped[list[OrganizationPhone]] = relationship(
         back_populates="organization",
         cascade="all, delete-orphan",
@@ -73,12 +89,24 @@ class OrganizationPhone(Base):
             organization: ORM-ссылка на организацию
     """
     __tablename__ = "organization_phones"
-    __table_args__ = (UniqueConstraint("organization_id", "phone", name="uq_org_phone"),)
+    __table_args__ = (UniqueConstraint(
+        "organization_id",
+        "phone",
+        name="uq_org_phone"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"), nullable=False)
-    phone: Mapped[str] = mapped_column(String(32), nullable=False)
-    organization: Mapped[Organization] = relationship(back_populates="phones")
+    organization_id: Mapped[int] = mapped_column(
+        ForeignKey("organizations.id"),
+        nullable=False,
+    )
+    phone: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+    )
+    organization: Mapped[Organization] = relationship(
+        back_populates="phones",
+    )
 
 
 class Activity(Base):
@@ -96,7 +124,10 @@ class Activity(Base):
     __tablename__ = "activities"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
     parent_id: Mapped[int | None] = mapped_column(
         ForeignKey("activities.id"),
         nullable=True,
@@ -105,7 +136,9 @@ class Activity(Base):
         remote_side="Activity.id",
         back_populates="children",
     )
-    children: Mapped[list[Activity]] = relationship(back_populates="parent")
+    children: Mapped[list[Activity]] = relationship(
+        back_populates="parent",
+    )
     organizations: Mapped[list[Organization]] = relationship(
         secondary="organization_activities",
         back_populates="activities",
@@ -115,7 +148,11 @@ class Activity(Base):
 class OrganizationActivity(Base):
     """Связующая таблица для связи M:N"""
     __tablename__ = "organization_activities"
-    __table_args__ = (UniqueConstraint("organization_id", "activity_id", name="uq_org_activity"),)
+    __table_args__ = (UniqueConstraint(
+        "organization_id",
+        "activity_id",
+        name="uq_org_activity"),
+    )
 
     organization_id: Mapped[int] = mapped_column(
         ForeignKey("organizations.id"),

@@ -1,11 +1,11 @@
 """Сервисный слой"""
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.geo import bbox_for_radius, bbox_for_rectangle, haversine_m
-from app.models import Organization
-from app.repositories import BuildingsRepository, OrgsRepository
-from app.schemas import BuildingOut, GeoSearchOut, OrganizationOut
+from app.api.v1.geo import bbox_for_radius, bbox_for_rectangle, haversine_m
+from app.models.models import Building, Organization
+from app.repo.repositories import BuildingsRepository, OrgsRepository
+from app.schemas.schemas import BuildingOut, GeoSearchOut, OrganizationOut
 
 
 def org_to_out(o: Organization) -> OrganizationOut:
@@ -19,7 +19,7 @@ def org_to_out(o: Organization) -> OrganizationOut:
             OrganizationOut: DTO для ответа
     """
     return OrganizationOut.model_validate(
-        {
+        obj={
             "id": o.id,
             "name": o.name,
             "building": o.building, "phones": [p.phone for p in o.phones],
@@ -45,7 +45,25 @@ class OrgsService:
         self.orgs = orgs
         self.buildings = buildings
 
-    def get_organization(self, db: Session, org_id: int) -> OrganizationOut:
+    async def _get_orgs_by_buildings(
+            self,
+            db: AsyncSession,
+            buildings: list[Building],
+    ) -> list[Organization]:
+        if not buildings:
+            return []
+
+        b_ids = [b.id for b in buildings]
+        return await self.orgs.orgs_by_building_ids(
+            db=db,
+            building_ids=b_ids,
+        )
+
+    async def get_organization(
+            self,
+            db: AsyncSession,
+            org_id: int,
+    ) -> OrganizationOut:
         """
             Возвращает организацию по id
 
@@ -59,7 +77,10 @@ class OrgsService:
             Raises:
                 HTTPException: 404, если организация не найдена
         """
-        org = self.orgs.get_org_by_id(db, org_id)
+        org = await self.orgs.get_org_by_id(
+            db=db,
+            org_id=org_id,
+        )
         if org is None:
             raise HTTPException(
                 status_code=404,
@@ -67,7 +88,11 @@ class OrgsService:
             )
         return org_to_out(org)
 
-    def search_by_name(self, db: Session, q: str) -> list[OrganizationOut]:
+    async def search_by_name(
+            self,
+            db: AsyncSession,
+            q: str,
+    ) -> list[OrganizationOut]:
         """
             Ищет организации по подстроке в названии
 
@@ -78,11 +103,15 @@ class OrgsService:
             Returns:
                 list[OrganizationOut]: Список найденных организаций
         """
-        return [org_to_out(o) for o in self.orgs.search_orgs_by_name(db, q)]
+        orgs = await self.orgs.search_orgs_by_name(
+            db=db,
+            q=q,
+        )
+        return [org_to_out(o) for o in orgs]
 
-    def organizations_in_building(
+    async def organizations_in_building(
             self,
-            db: Session,
+            db: AsyncSession,
             building_id: int,
     ) -> list[OrganizationOut]:
         """
@@ -95,15 +124,15 @@ class OrgsService:
             Returns:
                 list[OrganizationOut]: Список организаций в здании
         """
-        return [org_to_out(o) for o in self.orgs.orgs_in_building(
-            db,
-            building_id,
-            )
-        ]
+        orgs = await self.orgs.orgs_in_building(
+            db=db,
+            building_id=building_id,
+        )
+        return [org_to_out(o) for o in orgs]
 
-    def organizations_by_activity(
+    async def organizations_by_activity(
             self,
-            db: Session,
+            db: AsyncSession,
             activity_id: int,
     ) -> list[OrganizationOut]:
         """
@@ -119,16 +148,29 @@ class OrgsService:
             Raises:
                 HTTPException: 404, если activity не существует
         """
-        if not self.orgs.activity_exists(db, activity_id):
-            raise HTTPException(status_code=404, detail="Activity not found")
+        exists = await self.orgs.activity_exists(
+            db=db,
+            activity_id=activity_id,
+        )
+        if not exists:
+            raise HTTPException(
+                status_code=404,
+                detail="Activity not found",
+            )
 
-        ids = self.orgs.activity_descendants_ids(db, activity_id)
-        orgs = self.orgs.orgs_by_activity_ids(db, ids)
+        ids = await self.orgs.activity_descendants_ids(
+            db=db,
+            root_activity_id=activity_id,
+        )
+        orgs = await self.orgs.orgs_by_activity_ids(
+            db=db,
+            activity_ids=ids,
+        )
         return [org_to_out(o) for o in orgs]
 
-    def geo_radius(
+    async def geo_radius(
             self,
-            db: Session,
+            db: AsyncSession,
             lat: float,
             lon: float,
             r_m: float,
@@ -148,33 +190,39 @@ class OrgsService:
                     - organizations: организации в этих зданиях
         """
         bbox = bbox_for_radius(lat, lon, r_m)
-        buildings = self.buildings.buildings_in_bbox(db, bbox)
+        buildings = await self.buildings.buildings_in_bbox(
+            db=db,
+            bbox=bbox,
+        )
         near = [b for b in buildings if haversine_m(
-            lat,
-            lon,
-            b.lat,
-            b.lon,
+            lat1=lat,
+            lon1=lon,
+            lat2=b.lat,
+            lon2=b.lon,
         ) <= r_m]
 
         if not near:
-            return GeoSearchOut(organizations=[], buildings=[])
+            return GeoSearchOut(
+                organizations=[],
+                buildings=[],
+            )
 
-        b_ids = {b.id for b in near}
-        orgs = []
-        for b_id in b_ids:
-            orgs.extend(self.orgs.orgs_in_building(db, b_id))
+        orgs = await self._get_orgs_by_buildings(
+            db=db,
+            buildings=near,
+        )
 
         return GeoSearchOut(
             organizations=[org_to_out(o) for o in orgs],
             buildings=[BuildingOut.model_validate(
-                b,
+                obj=b,
                 from_attributes=True,
             ) for b in near],
         )
 
-    def geo_rectangle(
+    async def geo_rectangle(
             self,
-            db: Session,
+            db: AsyncSession,
             lat1: float,
             lon1: float,
             lat2: float,
@@ -195,21 +243,32 @@ class OrgsService:
                     - buildings: здания внутри прямоугольника
                     - organizations: организации в этих зданиях
         """
-        bbox = bbox_for_rectangle(lat1, lon1, lat2, lon2)
-        buildings = self.buildings.buildings_in_bbox(db, bbox)
+        bbox = bbox_for_rectangle(
+            lat1=lat1,
+            lon1=lon1,
+            lat2=lat2,
+            lon2=lon2,
+        )
+        buildings = await self.buildings.buildings_in_bbox(
+            db=db,
+            bbox=bbox,
+        )
 
         if not buildings:
-            return GeoSearchOut(organizations=[], buildings=[])
+            return GeoSearchOut(
+                organizations=[],
+                buildings=[],
+            )
 
-        b_ids = {b.id for b in buildings}
-        orgs = []
-        for b_id in b_ids:
-            orgs.extend(self.orgs.orgs_in_building(db, b_id))
+        orgs = await self._get_orgs_by_buildings(
+            db=db,
+            buildings=buildings,
+        )
 
         return GeoSearchOut(
             organizations=[org_to_out(o) for o in orgs],
             buildings=[BuildingOut.model_validate(
-                b,
+                obj=b,
                 from_attributes=True,
             ) for b in buildings],
         )

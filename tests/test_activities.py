@@ -1,11 +1,17 @@
 """HTTP-тест эндпоинтов, связанных с видами деятельности"""
-from fastapi.testclient import TestClient
+
+import pytest
+from httpx import AsyncClient
 
 
-def test_activity_not_found(client: TestClient) -> None:
+@pytest.mark.asyncio
+async def test_activity_not_found(
+        client: AsyncClient,
+        auth_headers: dict,
+) -> None:
     """Для несуществующего activity_id API вернет 404"""
-    resp = client.get(
+    resp = await client.get(
         url="/activities/999/organizations",
-        headers={"X-API-Key": "supersecret"},
+        headers=auth_headers,
     )
     assert resp.status_code == 404
