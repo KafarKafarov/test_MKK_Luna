@@ -7,7 +7,7 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_search_empty_res(
         client: AsyncClient,
-        auth_headers: dict,
+        auth_headers: dict[str, str],
 ) -> None:
     """
         Поиск по названию возвращает пустой список,
@@ -24,7 +24,7 @@ async def test_search_empty_res(
 @pytest.mark.asyncio
 async def test_get_organization(
         client: AsyncClient,
-        auth_headers: dict,
+        auth_headers: dict[str, str],
 ) -> None:
     """
         Запрос организации по несуществующему id должен вернуть 404

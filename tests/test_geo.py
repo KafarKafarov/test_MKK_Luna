@@ -7,7 +7,7 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_geo_validation(
         client: AsyncClient,
-        auth_headers: dict,
+        auth_headers: dict[str, str],
 ) -> None:
     """Радиус должен быть строго положительным"""
     resp = await client.get(
@@ -20,7 +20,7 @@ async def test_geo_validation(
 @pytest.mark.asyncio
 async def test_geo_empty(
         client: AsyncClient,
-        auth_headers: dict,
+        auth_headers: dict[str, str],
 ) -> None:
     """
         Геопоиск по прямоугольнику,

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -16,9 +16,9 @@ from sqlalchemy.pool import NullPool
 
 load_dotenv()
 
-from app.api.v1.main import app
-from app.core.db import get_db
-from app.models.models import Base
+from app.api.v1.main import app  # noqa: E402
+from app.core.db import get_db  # noqa: E402
+from app.models.models import Base  # noqa: E402
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -104,5 +104,5 @@ def mock_db() -> AsyncSession:
     return AsyncMock(spec=AsyncSession)
 
 @pytest.fixture
-def auth_headers():
+def auth_headers() -> dict[str, str]:
     return {"X-API-Key": "supersecret"}

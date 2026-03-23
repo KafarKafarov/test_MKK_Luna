@@ -7,7 +7,7 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_activity_not_found(
         client: AsyncClient,
-        auth_headers: dict,
+        auth_headers: dict[str, str],
 ) -> None:
     """Для несуществующего activity_id API вернет 404"""
     resp = await client.get(

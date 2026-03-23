@@ -40,7 +40,10 @@ async def test_get_organization(
         )
 
     assert exc.value.status_code == 404
-    fake_repo.get_org_by_id.assert_awaited_once_with(mock_db,1)
+    fake_repo.get_org_by_id.assert_awaited_once_with(
+        db=mock_db,
+        org_id=1,
+    )
 
 @pytest.mark.asyncio
 async def test_activity_not_found(
@@ -78,7 +81,7 @@ async def test_activity_not_found(
 @pytest.mark.asyncio
 async def test_search_validation(
         client: AsyncClient,
-        auth_headers: dict,
+        auth_headers: dict[str, str],
 ) -> None:
     """
         Тест валидации параметра q в /organizations/search
