@@ -1,6 +1,7 @@
 # Orgs API (тестовое)
 
 API для поиска организаций по названию, зданию, виду деятельности (с дочерними до 3 уровней) и геопоиска (радиус/прямоугольник).
+
 Стек: FastAPI + Pydantic v2 + SQLAlchemy 2.0 + Alembic + Postgres. Авторизация - статический API key.
 
 ---
@@ -30,11 +31,32 @@ API для поиска организаций по названию, здани
 Создай `.env` в корне проекта:
 
 ```env
-DATABASE_URL=postgresql+psycopg://orgs:1234@db:5432/orgs
+DATABASE_URL=postgresql+asyncpg://orgs:1234@db:5432/orgs
 API_KEY=supersecret
 ```
 ---
 
-## Поднять окружение для тестов
-- make up
-- make test
+## Поднять окружение для тестов через Docker
+
+```
+make up
+```
+После запуска API доступно:
+
+ - Swagger: http://localhost:8000/docs
+ - Health: http://localhost:8000/health
+---
+
+## Тесты
+
+```
+ make test
+```
+---
+
+## Авторизация
+
+Все запросы требуют заголовок:
+```
+X-API-Key: supersecret
+```
