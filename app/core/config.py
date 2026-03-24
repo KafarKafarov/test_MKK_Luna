@@ -6,6 +6,7 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 class Settings(BaseSettings):
     """
@@ -16,7 +17,7 @@ class Settings(BaseSettings):
            api_key: API ключ для авторизации HTTP-запросов
     """
     model_config = SettingsConfigDict(
-        env_file=Path(__file__).resolve().parents[1] / ".env",
+        env_file=BASE_DIR / ".env",
         extra="ignore",
     )
 
