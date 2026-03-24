@@ -1,4 +1,4 @@
-.PHONY: install lint test up down
+.PHONY: install lint test up down seed migrate
 
 install:
 	poetry install
@@ -15,3 +15,9 @@ up:
 
 down:
 	docker compose down -v
+
+seed:
+	poetry run python -m scripts.seed_data
+
+migrate:
+	poetry run alembic upgrade head
