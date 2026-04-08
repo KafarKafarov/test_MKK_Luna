@@ -45,6 +45,9 @@ make up
 
  - Swagger: http://localhost:8000/docs
  - Health: http://localhost:8000/health
+ - Prometheus metrics: http://localhost:8000/metrics
+ - Prometheus UI: http://localhost:9090
+ - Grafana: http://localhost:3001
 ---
 
 # Тестовые данные
@@ -81,3 +84,25 @@ X-API-Key: supersecret
 ```
  make migrate
 ```
+
+## Observability
+
+Ветка наблюдаемости теперь поднимает два контура:
+
+- `Loki + Alloy` для структурированных логов контейнеров
+- `Prometheus + Grafana` для HTTP-метрик приложения
+
+Что настроено:
+
+- `/metrics` в FastAPI без `X-API-Key`, чтобы Prometheus мог скрапить сервис внутри docker network
+- Счётчик запросов `orgs_api_http_requests_total`
+- Гистограмма latency `orgs_api_http_request_duration_seconds`
+- Автопровижининг datasource и dashboard в Grafana
+
+Готовый dashboard появляется автоматически в Grafana в папке `Observability`.
+
+Доступы по умолчанию:
+
+- Grafana: `admin` / `admin`
+
+Подробное объяснение схемы и метрик: `observability/README.md`

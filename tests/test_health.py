@@ -1,12 +1,18 @@
 """Smoke-тест для проверки доступности сервиса"""
-from fastapi.testclient import TestClient
+
+import pytest
+from httpx import ASGITransport, AsyncClient
 
 from app.api.v1.main import app
 
 
-def test_health() -> None:
+@pytest.mark.asyncio
+async def test_health() -> None:
     """Health-check эндпоинта"""
-    client = TestClient(app=app)
-    resp = client.get(url="/health")
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as client:
+        resp = await client.get(url="/health")
     assert resp.status_code == 200
     assert resp.json() == {"status": "ok"}

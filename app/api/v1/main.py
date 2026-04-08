@@ -1,13 +1,16 @@
 """Точка входа в приложение"""
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from starlette.responses import Response
 
 from app.api.middleware import RequestLoggingMiddleware
 from app.api.v1.api import router
 from app.core.config import settings
 from app.core.logging import get_logger, setup_logging
+from app.core.metrics import render_metrics
 
 setup_logging(
     log_level=settings.log_level,
@@ -18,7 +21,7 @@ logger = get_logger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Логирует запуск и остановку приложения"""
     logger.info("Application started")
     yield
@@ -42,7 +45,7 @@ app.include_router(router=router)
     tags=["health"],
     summary="Health check",
 )
-def health() -> dict[str, str]:
+async def health() -> dict[str, str]:
     """
     Проверка доступности сервиса
 
@@ -51,3 +54,18 @@ def health() -> dict[str, str]:
     """
     logger.info("Health check called")
     return {"status": "ok"}
+
+
+@app.get(
+    path="/metrics",
+    tags=["observability"],
+    summary="Prometheus metrics",
+)
+async def metrics() -> Response:
+    """
+    Отдаёт Prometheus-метрики приложения.
+
+    Returns:
+        Response: Текст в формате exposition format для Prometheus
+    """
+    return render_metrics()

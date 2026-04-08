@@ -9,7 +9,6 @@ services:
     ports:
       - "8000:8000"
 
-
   db:
     image: postgres:16-alpine
     environment:
@@ -50,6 +49,20 @@ services:
       - loki
       - app
 
+  prometheus:
+    image: prom/prometheus:v3.7.1
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - app
+
   grafana:
     image: grafana/grafana-oss:12.4.2
     ports:
@@ -60,11 +73,14 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/etc/grafana/dashboards:ro
     depends_on:
       - loki
+      - prometheus
 
 volumes:
   pgdata:
   loki-data:
   alloy-data:
+  prometheus-data:
   grafana-data:
