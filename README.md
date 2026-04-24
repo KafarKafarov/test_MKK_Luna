@@ -31,9 +31,12 @@ API для поиска организаций по названию, здани
 Создай `.env` в корне проекта:
 
 ```env
-DATABASE_URL=postgresql+asyncpg://orgs:1234@db:5432/orgs
+DATABASE_URL=postgresql+asyncpg://orgs:1234@localhost:5432/orgs
 API_KEY=supersecret
 ```
+
+Для `docker compose` адрес БД внутри контейнера переопределяется на `db:5432`,
+поэтому этот `.env` подходит и для локальных `poetry`/`make` команд, и для docker-сценария.
 ---
 
 ## Поднять окружение для тестов через Docker
@@ -48,6 +51,7 @@ make up
  - Prometheus metrics: http://localhost:8000/metrics
  - Prometheus UI: http://localhost:9090
  - Grafana: http://localhost:3001
+
 ---
 
 # Тестовые данные

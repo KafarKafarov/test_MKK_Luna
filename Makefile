@@ -1,4 +1,4 @@
-.PHONY: install lint test up down seed migrate
+.PHONY: install lint test up down down-v seed migrate
 
 install:
 	poetry install
@@ -14,9 +14,11 @@ up:
 	docker compose up --build
 
 down:
-	docker compose down -v
+	docker compose down
 
-seed:
+down-v:
+	docker compose down -v
+seed: migrate
 	poetry run python -m scripts.seed_data
 
 migrate:

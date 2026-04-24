@@ -1,7 +1,7 @@
 """Заполнение БД тестовыми данными"""
 import asyncio
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import SessionLocal
@@ -9,21 +9,25 @@ from app.models.models import (
     Activity,
     Building,
     Organization,
-    OrganizationActivity,
     OrganizationPhone,
 )
 
 
 async def _clear_tables(db: AsyncSession) -> None:
     """Очищает таблицы с учетом FK"""
-    for model in (
-        OrganizationActivity,
-        OrganizationPhone,
-        Organization,
-        Activity,
-        Building,
-    ):
-        await db.execute(delete(model))
+    await db.execute(
+        statement=text(
+            """
+        TRUNCATE TABLE
+            organization_activities,
+            organization_phones,
+            organizations,
+            activities,
+            buildings
+        RESTART IDENTITY CASCADE
+        """
+        ),
+    )
     await db.commit()
 
 
